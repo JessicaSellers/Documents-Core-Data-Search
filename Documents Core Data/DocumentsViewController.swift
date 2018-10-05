@@ -9,11 +9,18 @@
 import UIKit
 import CoreData
 
-class DocumentsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class DocumentsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, UISearchResultsUpdating{
+
+    
+    @IBOutlet weak var searchBar: UISearchBar!
+    
     @IBOutlet weak var documentsTableView: UITableView!
+    
     let dateFormatter = DateFormatter()
     var documents = [Document]()
-
+    var filteredDocuments = [Document]()
+    let searchController = UISearchController(searchResultsController: nil)
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -21,12 +28,27 @@ class DocumentsViewController: UIViewController, UITableViewDataSource, UITableV
 
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .medium
+        
     }
+
     
     override func viewWillAppear(_ animated: Bool) {
         fetchDocuments()
         documentsTableView.reloadData()
     }
+    
+    func searchBarIsEmpty() -> Bool {
+        return searchController.searchBar.text?.isEmpty ?? true
+    }
+    
+    func filterContentForSearchText(_ searchText: String, scope: String = "All") {
+        filteredDocuments = documents.filter({( document : Document) -> Bool in
+            return (document.name?.lowercased().contains(searchText.lowercased()))!
+        })
+        
+        documentsTableView.reloadData()
+    }
+
     
     func alertNotifyUser(message: String) {
         let alert = UIAlertController(title: "Alert", message: message, preferredStyle: UIAlertControllerStyle.alert)
@@ -70,13 +92,25 @@ class DocumentsViewController: UIViewController, UITableViewDataSource, UITableV
             }
         }
     }
+    func isFiltering() -> Bool {
+        return searchController.isActive && !searchBarIsEmpty()
+    }
+    func updateSearchResults(for searchController: UISearchController) {
+        filterContentForSearchText(searchController.searchBar.text!)
+
+    }
     
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if isFiltering() {
+            return filteredDocuments.count
+        }
+        
         return documents.count
+
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -93,7 +127,6 @@ class DocumentsViewController: UIViewController, UITableViewDataSource, UITableV
                 cell.modifiedLabel.text = "unknown"
             }
         }
-        
         return cell
     }
 
@@ -132,4 +165,5 @@ class DocumentsViewController: UIViewController, UITableViewDataSource, UITableV
     */
  
 
+    
 }
